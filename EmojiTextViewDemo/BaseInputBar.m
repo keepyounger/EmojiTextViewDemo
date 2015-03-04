@@ -12,6 +12,8 @@
 
 @interface BaseInputBar ()<UITextViewDelegate, FaceBoardDelegate>
 
+@property (nonatomic, strong) UIView *inputAccessoryView;
+
 @end
 
 @implementation BaseInputBar
@@ -47,37 +49,53 @@
     _faceBoard.inputTextView = _inputView;
     _faceBoard.delegage = self;
     
+    _inputAccessoryView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 10, 40)];
+    _inputAccessoryView.backgroundColor = [UIColor clearColor];
+    _inputAccessoryView.userInteractionEnabled = NO;
+    _inputView.inputAccessoryView = _inputAccessoryView;
+    
+    _voiceBoard = [[UIView alloc] initWithFrame:CGRectMake(0, 0, MainScreenWidth, 216)];
+    
+    _fileBoard = [[UIView alloc] initWithFrame:CGRectMake(0, 0, MainScreenWidth, 216)];
+    
     _inputView.delegate = self;
+    
+    _voiceTurnBtn = [BaseButton buttonWithFrame:CGRectMake(5, 5, 40, 30) title:@"录音"];
+    [_voiceTurnBtn setTitle:@"键盘" forState:UIControlStateSelected];
+    [_voiceTurnBtn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    [_voiceTurnBtn addTarget:self action:@selector(turnVoiceBoard:) forControlEvents:UIControlEventTouchUpInside];
     
     _faceTurnBtn = [BaseButton buttonWithFrame:CGRectMake(MainScreenWidth-95, 5, 40, 30) title:@"表情"];
     [_faceTurnBtn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
     [_faceTurnBtn setTitle:@"键盘" forState:UIControlStateSelected];
     [_faceTurnBtn addTarget:self action:@selector(turnFaceBoard:) forControlEvents:UIControlEventTouchUpInside];
     
-    UIButton *faceStr = [BaseButton buttonWithFrame:CGRectMake(MainScreenWidth-55, 5, 40, 30) title:@"打印"];
-    [faceStr setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-    [faceStr addTarget:self action:@selector(showFaceStr) forControlEvents:UIControlEventTouchUpInside];
+    _fileTurnBtn = [BaseButton buttonWithFrame:CGRectMake(MainScreenWidth-45, 5, 40, 30) title:@"文件"];
+    [_fileTurnBtn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    [_fileTurnBtn setTitle:@"键盘" forState:UIControlStateSelected];
+    [_fileTurnBtn addTarget:self action:@selector(fileFaceBoard:) forControlEvents:UIControlEventTouchUpInside];
     
+    [self addSubview:_voiceTurnBtn];
     [self addSubview:_faceTurnBtn];
-    [self addSubview:faceStr];
     [self addSubview:_inputView];
+    [self addSubview:_fileTurnBtn];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillHide) name:UIKeyboardWillHideNotification object:nil];
-}
-
-- (void)showFaceStr
-{
-    NSLog(@"%@", self.inputView.faceStr);
 }
 
 - (void)keyboardWillHide
 {
     _faceTurnBtn.selected = NO;
+    _voiceTurnBtn.selected = NO;
+    _fileTurnBtn.selected = NO;
     _inputView.inputView = nil;
 }
 
 - (void)turnFaceBoard:(BaseButton*)btn
 {
     btn.selected = !btn.selected;
+    
+    _voiceTurnBtn.selected = NO;
+    _fileTurnBtn.selected = NO;
     
     if (_inputView.inputView == _faceBoard) {
         _inputView.inputView = nil;
@@ -88,6 +106,43 @@
     
     [_inputView reloadInputViews];
 }
+
+- (void)turnVoiceBoard:(BaseButton*)btn
+{
+    btn.selected = !btn.selected;
+    
+    _faceTurnBtn.selected = NO;
+    _fileTurnBtn.selected = NO;
+    
+    if (_inputView.inputView == _voiceBoard) {
+        _inputView.inputView = nil;
+    } else {
+        
+        [_inputView becomeFirstResponder];
+        _inputView.inputView = _voiceBoard;
+    }
+    
+    [_inputView reloadInputViews];
+}
+
+- (void)fileFaceBoard:(BaseButton*)btn
+{
+    btn.selected = !btn.selected;
+    
+    _voiceTurnBtn.selected = NO;
+    _faceTurnBtn.selected = NO;
+    
+    if (_inputView.inputView == _fileBoard) {
+        _inputView.inputView = nil;
+    } else {
+        
+        [_inputView becomeFirstResponder];
+        _inputView.inputView = _fileBoard;
+    }
+    
+    [_inputView reloadInputViews];
+}
+
 
 - (void)textViewDidChange:(BaseTextView *)textView
 {
@@ -124,6 +179,14 @@
     self.height -= detaHeight;
     textView.height = self.height - 10;
     
+    if (_inputAccessoryView.height != self.height) {
+        _inputAccessoryView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 10, self.height)];
+        _inputAccessoryView.backgroundColor = [UIColor clearColor];
+        _inputAccessoryView.userInteractionEnabled = NO;
+        textView.inputAccessoryView = _inputAccessoryView;
+        [textView reloadInputViews];
+    }
+    
 }
 
 - (BOOL)textView:(BaseTextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text
@@ -145,7 +208,13 @@
 #pragma mark ---FaceBoardDelegate---
 - (void)sendMessage
 {
-    //发送消息
+    
+    if (_delegage && [_delegage respondsToSelector:@selector(sendMessageWithMsg:)]) {
+        
+        [_delegage sendMessageWithMsg:self.inputView.faceStr];
+        _inputView.text = @"";
+        
+    }
 }
 
 /*

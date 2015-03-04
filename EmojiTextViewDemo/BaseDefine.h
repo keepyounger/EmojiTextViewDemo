@@ -9,6 +9,12 @@
 #ifndef utt_BaseDefine_h
 #define utt_BaseDefine_h
 
+//自定义NavBar的高度
+#define NavBarHeight 44
+
+//自定义TabBar的高度
+#define TabBarHeight 49
+
 //状态条的高
 #define StatusBarHeight [[UIApplication sharedApplication] statusBarFrame].size.height
 
