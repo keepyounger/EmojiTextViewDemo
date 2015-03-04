@@ -3,6 +3,6 @@
 <br/>
 <br/>
 <img  src="demo.png"  alt="demo.png" />
-<img  src="ios7Key.jif"  alt="ios7Key.gif" />
+<img  src="ios7Key.gif"  alt="ios7Key.gif" />
 # Support
 因用到TextKit 代码只支持 iOS 7.0 以上操作系统
